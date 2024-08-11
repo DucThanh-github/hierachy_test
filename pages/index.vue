@@ -1,10 +1,10 @@
 <template>
-  <h1>test</h1>
+  <CreateRoleDIalog />
   <easy-data-table :headers="headers" :items="items" show-index hide-footer>
     <template #item-sales="item">
       <v-switch
         color="green"
-        :model-value="item.permissions[PermissionIdEnum.SALE].permission"
+        :model-value="item.permissions[PermissionIdEnum.SALE].enable"
         @update:model-value="updateRole($event, item, PermissionIdEnum.SALE)"
       />
     </template>
@@ -23,14 +23,14 @@
             PermissionScopeIdEnum.PUBLIC_SALE
           )
         "
-        :disabled="!item.permissions[PermissionIdEnum.SALE].permission"
+        :disabled="!item.permissions[PermissionIdEnum.SALE].enable"
       />
     </template>
 
     <template #item-view_report="item">
       <v-switch
         color="green"
-        :model-value="item.permissions[PermissionIdEnum.REPORT].permission"
+        :model-value="item.permissions[PermissionIdEnum.REPORT].enable"
         @update:model-value="updateRole($event, item, PermissionIdEnum.REPORT)"
       />
     </template>
@@ -49,7 +49,7 @@
             PermissionScopeIdEnum.ALL_CUSTOMER
           )
         "
-        :disabled="!item.permissions[PermissionIdEnum.REPORT].permission"
+        :disabled="!item.permissions[PermissionIdEnum.REPORT].enable"
       />
     </template>
 
@@ -57,7 +57,7 @@
       <v-switch
         color="green"
         :model-value="
-          item.permissions[PermissionIdEnum.PRICE_APPROVAL].permission
+          item.permissions[PermissionIdEnum.PRICE_APPROVAL].enable
         "
         @update:model-value="updateRole($event, item,PermissionIdEnum.PRICE_APPROVAL)"
       />
@@ -66,15 +66,15 @@
     <template #item-Import="item">
       <v-switch
         color="green"
-        :model-value="item.permissions[PermissionIdEnum.IMPORT].permission"
-        @update:model-value="updateRole($event, item)"
+        :model-value="item.permissions[PermissionIdEnum.IMPORT].enable"
+        @update:model-value="updateRole($event, item,PermissionIdEnum.IMPORT)"
       />
     </template>
   </easy-data-table>
 </template>
 
 <script setup lang="ts">
-import { PermissionIdEnum, PermissionScopeIdEnum } from "~/type/test";
+import { PermissionIdEnum, PermissionScopeIdEnum } from "~/type/role";
 const headers = ref([
   { text: "Name role", value: "name" },
   { text: "Sales", value: "sales" },
@@ -92,23 +92,23 @@ const items = ref([
     name_th: "Role 1",
     permissions: {
       [PermissionIdEnum.SALE]: {
-        permission: true,
+        enable: true,
         scope: {
           [PermissionScopeIdEnum.PUBLIC_SALE]: true,
         },
       },
       [PermissionIdEnum.REPORT]: {
-        permission: true,
+        enable: true,
         scope: {
           [PermissionScopeIdEnum.ALL_CUSTOMER]: true,
         },
       },
       [PermissionIdEnum.PRICE_APPROVAL]: {
-        permission: true,
+        enable: true,
         scope: null,
       },
       [PermissionIdEnum.IMPORT]: {
-        permission: true,
+        enable: true,
         scope: null,
       },
     },
@@ -119,60 +119,30 @@ const items = ref([
     name_th: "Role 2",
     permissions: {
       [PermissionIdEnum.SALE]: {
-        permission: true,
+        enable: true,
         scope: {
           [PermissionScopeIdEnum.PUBLIC_SALE]: false,
         },
       },
       [PermissionIdEnum.REPORT]: {
-        permission: false,
+        enable: false,
         scope: {
           [PermissionScopeIdEnum.ALL_CUSTOMER]: false,
         },
       },
       [PermissionIdEnum.PRICE_APPROVAL]: {
-        permission: false,
+        enable: false,
         scope: null,
       },
       [PermissionIdEnum.IMPORT]: {
-        permission: false,
+        enable: false,
         scope: null,
       },
     },
   },
 ]);
 
-const transformPermissionToArray = (permissionObject) => {
-  return Object.values(PermissionIdEnum).map((idPermission) => {
-    const id = idPermission;
-    const enable = permissionObject[idPermission].permission;
-    if (
-      !permissionObject[idPermission].scope ||
-      (permissionObject[idPermission].scope &&
-        !Object.keys(permissionObject[idPermission].scope).length)
-    ) {
-      return {
-        id,
-        enable,
-        permission_scopes: [],
-      };
-    }
-    const keyPermissionScope = Object.keys(
-      permissionObject[idPermission].scope
-    );
-    const permission_scopes = keyPermissionScope.map((permissionScopeItem) => {
-      return {
-        id: permissionScopeItem,
-        enable: permissionObject[idPermission].scope[permissionScopeItem],
-      };
-    });
-    return {
-      id,
-      enable,
-      permission_scopes,
-    };
-  });
-};
+
 
 const response = [
   {
@@ -181,7 +151,7 @@ const response = [
     permission_scopes: [
       {
         id: "PUBLIC_SALE",
-        enable: true,
+        enable: false,
       },
     ],
   },
@@ -195,52 +165,18 @@ const response = [
       },
     ],
   },
+  {
+    id: "PRICE_APPROVAL",
+    enable: true,
+    permission_scopes: [
+    ],
+  },
 ];
 
-const transformPermissionToObject = (permissionArray) => {
-  const permissionDefault = {
-    [PermissionIdEnum.SALE]: {
-      permission: false,
-      scope: {
-        [PermissionScopeIdEnum.PUBLIC_SALE]: false,
-      },
-    },
-    [PermissionIdEnum.REPORT]: {
-      permission: false,
-      scope: {
-        [PermissionScopeIdEnum.ALL_CUSTOMER]: false,
-      },
-    },
-    [PermissionIdEnum.PRICE_APPROVAL]: {
-      permission: false,
-      scope: null,
-    },
-    [PermissionIdEnum.IMPORT]: {
-      permission: false,
-      scope: null,
-    },
-  };
 
-  if (permissionArray && permissionArray.length) {
-    permissionArray.forEach((permissionItem) => {
-      permissionDefault[permissionItem.id].permission = permissionItem.enable;
-      if (
-        permissionItem.permission_scopes &&
-        permissionItem.permission_scopes.length
-      ) {
-        permissionItem.permission_scopes.forEach((permissionScopeItem) => {
-          console.log("scope");
-          permissionDefault[permissionItem.id].scope[permissionScopeItem.id] =
-            permissionScopeItem.enable;
-        });
-      }
-    });
-  }
-  return permissionDefault;
-};
 onMounted(() => {
   // console.log(transformPermissionToArray(items.value[0].permissions));
-  // console.log(transformPermissionToObject(response));
+  console.log(transformPermissionToObject(response));
 });
 
 const updateRole = (
@@ -250,7 +186,7 @@ const updateRole = (
   permissionScopeId?: PermissionScopeIdEnum
 ) => {
   if (!permissionScopeId) {
-    role.permissions[permissionId].permission = event;
+    role.permissions[permissionId].enable = event;
     if (
       (permissionId === PermissionIdEnum.SALE ||
       permissionId === PermissionIdEnum.REPORT) &&
