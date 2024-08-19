@@ -43,22 +43,29 @@ const data = {
       backgroundColor: "red",
       data: [-50, -60, -30, -80, -75, -28, -53],
       yAxisID: "y1",
-      borderDash: [10, 5],
+      borderDash: [10, 10],
     },
   ],
 };
 
 const options = {
- plugins: {
-  legend: {
-    labels: {
-      // padding:0
-      usePointStyle: true,
-      pointStyle:'line'
-
+  plugins: {
+    legend: {
+      labels: {
+        usePointStyle: true,
+        pointStyleWidth: 50,
+        generateLabels: (chart) => {
+          return chart.data.datasets.map((dataset) => ({
+            pointStyle: 'line',
+            text: dataset.label,
+            strokeStyle: dataset.borderColor,
+            lineDash: dataset.borderDash  || [], // set dash legend label
+            lineWidth: 2,
+          }));
+        },
+      },
     },
   },
- },
   scales: {
     x: {
       grid: {
@@ -94,9 +101,9 @@ const options = {
         callback: (value) => value + "%",
       },
       // grid line settings
-      //   grid: {
-      //     drawOnChartArea: false, // only want the grid lines for one axis to show up
-      //   },
+      // grid: {
+      //   drawOnChartArea: false, // only want the grid lines for one axis to show up
+      // },
     },
   },
 };
